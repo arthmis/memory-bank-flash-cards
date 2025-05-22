@@ -14,11 +14,11 @@ type DeckModel struct {
 }
 
 type NewDeck struct {
-	name string
+	Name string
 }
 
-func (m DeckModel) save(newDeck NewDeck) {
-	_, err := m.Queries.CreateDeck(context.Background(), newDeck.name)
+func (m DeckModel) CreateDeck(newDeck NewDeck) {
+	_, err := m.Queries.CreateDeck(context.Background(), newDeck.Name)
 	if err != nil {
 		logger := log.Default()
 		logger.Println(err)
