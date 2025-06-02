@@ -7,13 +7,12 @@ import (
 	"log"
 	"memorybank/database"
 	"memorybank/queries"
+	"memorybank/views"
 	"net/http"
 	"os"
-	"strings"
 
+	"github.com/a-h/templ"
 	"github.com/clerk/clerk-sdk-go/v2"
-	"github.com/clerk/clerk-sdk-go/v2/jwt"
-	"github.com/clerk/clerk-sdk-go/v2/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
@@ -49,39 +48,53 @@ func main() {
 	}
 
 	e := echo.New()
+	e.Static("/", "static")
 	e.GET("/dashboard", env.dashboard)
+	e.GET("/login", env.Login)
+	// e.GET("api/login", env.login)
 	e.POST("/deck", env.createDeck, Auth)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
 func (env *Env) dashboard(c echo.Context) error {
+	claims, ok := clerk.SessionClaimsFromContext(c.Request().Context())
+	if !ok {
+		c.Response().WriteHeader(http.StatusUnauthorized)
+		c.Response().Write([]byte(`{"access": "unauthorized"}`))
+		return errors.New("unauthorized")
+	}
+	fmt.Fprintf(c.Response().Writer, `{"user_id": "%s"}`, claims.Subject)
+
 	// handle getting all the decks and their names
-	return c.NoContent(http.StatusOK)
+	return c.HTML(http.StatusOK, "hi")
+}
+
+func (env *Env) Login(c echo.Context) error {
+	component := views.Login()
+	return html(c, http.StatusOK, component)
+}
+
+func html(ctx echo.Context, statusCode int, t templ.Component) error {
+	buf := templ.GetBuffer()
+	defer templ.ReleaseBuffer(buf)
+
+	if err := t.Render(ctx.Request().Context(), buf); err != nil {
+		return err
+	}
+
+	return ctx.HTML(statusCode, buf.String())
 }
 
 // Process is the middleware function.
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Get the session JWT from the Authorization header
-		sessionToken := strings.TrimPrefix(c.Request().Header.Get("Authorization"), "Bearer ")
-		context := c.Request().Context()
-
-		// Verify the session
-		claims, err := jwt.Verify(context, &jwt.VerifyParams{
-			Token: sessionToken,
-		})
-		if err != nil {
-			// handle the error
+		claims, ok := clerk.SessionClaimsFromContext(c.Request().Context())
+		if !ok {
 			c.Response().WriteHeader(http.StatusUnauthorized)
 			c.Response().Write([]byte(`{"access": "unauthorized"}`))
 			return errors.New("unauthorized")
 		}
-
-		usr, err := user.Get(context, claims.Subject)
-		if err != nil {
-			// handle the error
-		}
-		fmt.Fprintf(c.Response().Writer, `{"user_id": "%s", "user_banned": "%t"}`, usr.ID, usr.Banned)
+		fmt.Fprintf(c.Response().Writer, `{"user_id": "%s"}`, claims.Subject)
 
 		next(c)
 
