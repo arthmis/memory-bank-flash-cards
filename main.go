@@ -10,13 +10,32 @@ import (
 	"memorybank/views"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/a-h/templ"
 	"github.com/clerk/clerk-sdk-go/v2"
+	clerkhttp "github.com/clerk/clerk-sdk-go/v2/http"
+	"github.com/clerk/clerk-sdk-go/v2/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
 )
+
+func (env *Env) Login(c echo.Context) error {
+	component := views.Login()
+	return html(c, http.StatusOK, component)
+}
+
+func html(ctx echo.Context, statusCode int, t templ.Component) error {
+	buf := templ.GetBuffer()
+	defer templ.ReleaseBuffer(buf)
+
+	if err := t.Render(ctx.Request().Context(), buf); err != nil {
+		return err
+	}
+
+	return ctx.HTML(statusCode, buf.String())
+}
 
 type Env struct {
 	decks database.DeckModel
@@ -29,6 +48,7 @@ func main() {
 	}
 
 	clerkKey := os.Getenv("clerk_secret_key")
+
 	// Set the API key with your Clerk Secret Key
 	clerk.SetKey(clerkKey)
 
@@ -49,44 +69,22 @@ func main() {
 
 	e := echo.New()
 	e.Static("/", "static")
-	e.GET("/dashboard", env.dashboard)
+	// e.GET("/dashboard", env.dashboard, cookiesToAuth, handleAuth)
+	// protectedHandler := http.HandlerFunc(clerkAuth)
+	// headerAuthorization := clerkhttp.WithHeaderAuthorization()(protectedHandler)
+	headerAuthorization := clerkhttp.WithHeaderAuthorization()
+	authorization := echo.WrapMiddleware(headerAuthorization)
+	e.GET("/dashboard", env.dashboard, cookiesToAuth, authorization, clerkAuth)
 	e.GET("/login", env.Login)
 	// e.GET("api/login", env.login)
-	e.POST("/deck", env.createDeck, Auth)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
 func (env *Env) dashboard(c echo.Context) error {
-	claims, ok := clerk.SessionClaimsFromContext(c.Request().Context())
-	if !ok {
-		c.Response().WriteHeader(http.StatusUnauthorized)
-		c.Response().Write([]byte(`{"access": "unauthorized"}`))
-		return errors.New("unauthorized")
-	}
-	fmt.Fprintf(c.Response().Writer, `{"user_id": "%s"}`, claims.Subject)
-
-	// handle getting all the decks and their names
 	return c.HTML(http.StatusOK, "hi")
 }
 
-func (env *Env) Login(c echo.Context) error {
-	component := views.Login()
-	return html(c, http.StatusOK, component)
-}
-
-func html(ctx echo.Context, statusCode int, t templ.Component) error {
-	buf := templ.GetBuffer()
-	defer templ.ReleaseBuffer(buf)
-
-	if err := t.Render(ctx.Request().Context(), buf); err != nil {
-		return err
-	}
-
-	return ctx.HTML(statusCode, buf.String())
-}
-
-// Process is the middleware function.
-func Auth(next echo.HandlerFunc) echo.HandlerFunc {
+func clerkAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		claims, ok := clerk.SessionClaimsFromContext(c.Request().Context())
 		if !ok {
@@ -94,12 +92,66 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 			c.Response().Write([]byte(`{"access": "unauthorized"}`))
 			return errors.New("unauthorized")
 		}
-		fmt.Fprintf(c.Response().Writer, `{"user_id": "%s"}`, claims.Subject)
+
+		usr, err := user.Get(c.Request().Context(), claims.Subject)
+		if err != nil {
+			// handle the error
+		}
+		fmt.Fprintf(c.Response().Writer, `{"user_id": "%s", "user_banned": "%t"}`, usr.ID, usr.Banned)
 
 		next(c)
-
 		return nil
 	}
+}
+
+func cookiesToAuth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		authHeader := c.Request().Header.Get("Authorization")
+		cookieHeader := c.Request().Header.Get("Cookie")
+		requestCookie, cookieErr := c.Cookie("__session")
+		if authHeader != "" {
+			fmt.Printf("Auth header ----- %s", authHeader)
+			next(c)
+			return nil
+		} else {
+			if cookieErr == nil && requestCookie.Value != "" {
+				// fmt.Printf("Request Cookie ----- %s", requestCookie.Value)
+				setAuthHeader(c.Request(), requestCookie.Value)
+				next(c)
+				return nil
+			}
+			if cookieHeader != "" {
+				// fmt.Printf("Cookie header ----- %s", cookieHeader)
+				session := getSessionFromCookieHeader(cookieHeader)
+				setAuthHeader(c.Request(), session)
+				next(c)
+				return nil
+			}
+			next(c)
+			return errors.New("couldn't find cookie or auth header for authentication")
+		}
+	}
+}
+
+func getSessionFromCookieHeader(cookie string) string {
+	value := strings.Split(cookie, " ")
+	var session string
+	for _, v := range value {
+		if strings.Contains(v, "__session_") {
+			val := strings.Split(v, "=")
+			if len(val) >= 1 {
+				session = val[1]
+				session = strings.Replace(session, ";", "", -1)
+				fmt.Printf("Session ----- %s", session)
+				return session
+			}
+		}
+	}
+	return session
+}
+
+func setAuthHeader(r *http.Request, value string) {
+	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", value))
 }
 
 func (env *Env) createDeck(c echo.Context) error {
