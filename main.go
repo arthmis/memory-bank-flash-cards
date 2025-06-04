@@ -15,7 +15,6 @@ import (
 	"github.com/a-h/templ"
 	"github.com/clerk/clerk-sdk-go/v2"
 	clerkhttp "github.com/clerk/clerk-sdk-go/v2/http"
-	"github.com/clerk/clerk-sdk-go/v2/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
@@ -81,23 +80,24 @@ func main() {
 }
 
 func (env *Env) dashboard(c echo.Context) error {
-	return c.HTML(http.StatusOK, "hi")
+	component := views.Dashboard()
+	return html(c, http.StatusOK, component)
 }
 
 func clerkAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		claims, ok := clerk.SessionClaimsFromContext(c.Request().Context())
+		_, ok := clerk.SessionClaimsFromContext(c.Request().Context())
 		if !ok {
 			c.Response().WriteHeader(http.StatusUnauthorized)
 			c.Response().Write([]byte(`{"access": "unauthorized"}`))
 			return errors.New("unauthorized")
 		}
 
-		usr, err := user.Get(c.Request().Context(), claims.Subject)
-		if err != nil {
-			// handle the error
-		}
-		fmt.Fprintf(c.Response().Writer, `{"user_id": "%s", "user_banned": "%t"}`, usr.ID, usr.Banned)
+		// usr, err := user.Get(c.Request().Context(), claims.Subject)
+		// if err != nil {
+		// 	// handle the error
+		// }
+		// fmt.Fprintf(c.Response().Writer, `{"user_id": "%s", "user_banned": "%t"}`, usr.ID, usr.Banned)
 
 		next(c)
 		return nil
