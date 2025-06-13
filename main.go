@@ -75,6 +75,8 @@ func main() {
 	authorization := echo.WrapMiddleware(headerAuthorization)
 	e.GET("/dashboard", env.dashboard, cookiesToAuth, authorization, clerkAuth)
 	e.GET("/login", env.Login)
+	// e.POST("/api/cards", env.Cards, cookiesToAuth, authorization, clerkAuth)
+	e.POST("/api/cards", env.Cards)
 	// e.GET("api/login", env.login)
 	e.Logger.Fatal(e.Start(":8000"))
 }
@@ -82,6 +84,29 @@ func main() {
 func (env *Env) dashboard(c echo.Context) error {
 	component := views.Dashboard()
 	return html(c, http.StatusOK, component)
+}
+
+type CardInput struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+}
+
+func (env *Env) Cards(c echo.Context) error {
+	cardInput := CardInput{}
+	err := c.Bind(&cardInput)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	cardParams := queries.CreateCardParams{
+		Question: cardInput.Question,
+		Answer:   cardInput.Answer,
+	}
+	card, err := env.decks.Queries.CreateCard(context.Background(), cardParams)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, card)
 }
 
 func clerkAuth(next echo.HandlerFunc) echo.HandlerFunc {
