@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { useContext } from "solid-js"
 import { JSX } from "solid-js/jsx-runtime";
 
 export function NewCard() {
