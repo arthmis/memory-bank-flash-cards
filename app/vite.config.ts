@@ -8,7 +8,7 @@ export default defineConfig({
       target: 'solid',
       autoCodeSplitting: true,
       verboseFileRoutes: false,
-      apiBase: "/dashboard/",
+      // apiBase: "/dashboard/",
     }),
     solidPlugin(),
   ],

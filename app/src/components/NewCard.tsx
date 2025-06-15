@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { useContext } from "solid-js"
 import { JSX } from "solid-js/jsx-runtime";
-import { Card, DeckContext, Route } from "../routes/deck/$deckId";
+import { Card, DeckContext, Route } from "../routes/decks/$deckId";
 
 export function NewCard() {
     const { deckId } = Route.useParams()();

@@ -203,6 +203,7 @@ func (env *Env) getDecks(c echo.Context) error {
 	fmt.Println("getting decks")
 	decks, err := env.decks.Queries.ListDecks(c.Request().Context())
 	if err != nil {
+		fmt.Println("couldn't get decks")
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

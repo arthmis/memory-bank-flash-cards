@@ -60,7 +60,7 @@ function Index() {
         <For each={decks()}>
           {(item, index) => (
             <li>
-              <Link to={`/deck/${item.id}`}>{item.name}</Link>
+              <Link to={`/decks/${item.id}`}>{item.name}</Link>
             </li>
           )}
         </For>

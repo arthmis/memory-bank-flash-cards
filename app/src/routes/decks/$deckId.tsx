@@ -11,7 +11,6 @@ const fetchCards = async ( params ): Promise<Array<Card>> => {
 }
 
 export const Route = createFileRoute({
-    // loaderDeps: ({ params }) > ({ params }),
     loader: async ({ params}) => fetchCards(  params  ),
     component: DeckComponent,
 })
@@ -19,7 +18,7 @@ export const Route = createFileRoute({
 interface DeckState {
     deckId: string;
     isAddingCard: boolean;
-    cards: Card[]; // Define a proper type for cards if possible
+    cards: Card[];
 }
 
 export interface Card {
@@ -37,14 +36,13 @@ function DeckComponent() {
         deckId,
         isAddingCard: false,
         cards: cards(),
-        // cards: Array<Card>(),
     })
-    const [isAddingCard, setIsAddingCard] = createSignal(false);
+
     return <>
         <DeckContext.Provider value={{ state, setState }}>
             <h1>{deckId}</h1>
-            <button onClick={() => setIsAddingCard(true)}>New Card</button>
-            {isAddingCard() && (
+            <button onClick={() => setState("isAddingCard", true)}>New Card</button>
+            {state.isAddingCard && (
                 <NewCard />
             )}
             <For each={state.cards}>
