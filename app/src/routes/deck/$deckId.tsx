@@ -4,13 +4,15 @@ import { NewCard } from "../../components/NewCard";
 import type { StoreNode, Store as StoreType, SetStoreFunction } from "solid-js/store"
 import { getRouteApi } from "@tanstack/solid-router";
 
-const fetchCards = async (): Promise<Array<Card>> => {
-  const json = (await fetch("/api/deck/1/cards")).json()
+const fetchCards = async ( params ): Promise<Array<Card>> => {
+  const { deckId } = params;
+  const json = (await fetch(`/api/decks/${deckId}/cards`)).json()
   return json
 }
 
 export const Route = createFileRoute({
-    // loader: async () => fetchCards(),
+    // loaderDeps: ({ params }) > ({ params }),
+    loader: async ({ params}) => fetchCards(  params  ),
     component: DeckComponent,
 })
 
@@ -30,13 +32,12 @@ export const DeckContext = createContext<{ state: Store<DeckState>, setState: Se
 
 function DeckComponent() {
     const { deckId } = Route.useParams()();
-    // const routeApi = getRouteApi('/decks/$deckId/cards')
-    // const cards = routeApi.useLoaderData()
+    const cards = Route.useLoaderData()
     const [state, setState] = createStore({
         deckId,
         isAddingCard: false,
-        // cards: cards(),
-        cards: Array<Card>(),
+        cards: cards(),
+        // cards: Array<Card>(),
     })
     const [isAddingCard, setIsAddingCard] = createSignal(false);
     return <>

@@ -79,6 +79,7 @@ func main() {
 	// e.POST("/api/cards", env.Cards, cookiesToAuth, authorization, clerkAuth)
 	e.POST("/api/cards", env.Cards)
 	e.POST("/api/decks/:deck_id/cards", env.createCard)
+	e.GET("/api/decks/:deck_id/cards", env.getCards)
 	// e.GET("api/login", env.login)
 	e.Logger.Fatal(e.Start(":8000"))
 }
@@ -239,4 +240,22 @@ func (env *Env) createCard(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, card)
+}
+
+func (env *Env) getCards(c echo.Context) error {
+	fmt.Println("getting cards")
+
+	parsedDeckId, err := strconv.Atoi(c.Param("deck_id"))
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	deckId := int32(parsedDeckId)
+	fmt.Println(deckId)
+
+	cards, err := env.decks.Queries.ListCards(c.Request().Context(), deckId)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, cards)
 }

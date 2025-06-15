@@ -38,11 +38,12 @@ func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, e
 
 const listCards = `-- name: ListCards :many
 SELECT id, question, answer, deck_id FROM cards
+WHERE deck_id = $1
 ORDER BY question
 `
 
-func (q *Queries) ListCards(ctx context.Context) ([]Card, error) {
-	rows, err := q.db.Query(ctx, listCards)
+func (q *Queries) ListCards(ctx context.Context, deckID int32) ([]Card, error) {
+	rows, err := q.db.Query(ctx, listCards, deckID)
 	if err != nil {
 		return nil, err
 	}

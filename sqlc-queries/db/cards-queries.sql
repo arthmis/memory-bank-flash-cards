@@ -1,5 +1,6 @@
 -- name: ListCards :many
 SELECT * FROM cards
+WHERE deck_id = $1
 ORDER BY question;
 
 -- name: CreateCard :one
