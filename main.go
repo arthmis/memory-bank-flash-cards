@@ -7,23 +7,21 @@ import (
 	"log"
 	"memorybank/database"
 	"memorybank/queries"
-	"memorybank/views"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/a-h/templ"
 	"github.com/clerk/clerk-sdk-go/v2"
-	clerkhttp "github.com/clerk/clerk-sdk-go/v2/http"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo"
 )
 
-func (env *Env) Login(c echo.Context) error {
-	component := views.Login()
-	return html(c, http.StatusOK, component)
-}
+// func (env *Env) Login(c echo.Context) error {
+// 	component := views.Login()
+// 	return html(c, http.StatusOK, component)
+// }
 
 func html(ctx echo.Context, statusCode int, t templ.Component) error {
 	buf := templ.GetBuffer()
@@ -67,28 +65,30 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Static("/", "static")
+	e.Static("/dashboard", "app/dist")
 	// e.GET("/dashboard", env.dashboard, cookiesToAuth, handleAuth)
 	// protectedHandler := http.HandlerFunc(clerkAuth)
 	// headerAuthorization := clerkhttp.WithHeaderAuthorization()(protectedHandler)
-	headerAuthorization := clerkhttp.WithHeaderAuthorization()
-	authorization := echo.WrapMiddleware(headerAuthorization)
-	e.GET("/dashboard", env.dashboard, cookiesToAuth, authorization, clerkAuth)
-	e.GET("/login", env.Login)
+	// headerAuthorization := clerkhttp.WithHeaderAuthorization()
+	// authorization := echo.WrapMiddleware(headerAuthorization)
+	// e.GET("/dashboard", env.dashboard, cookiesToAuth, authorization, clerkAuth)
+	// e.GET("/login", env.Login)
+	e.POST("/api/decks", env.createDeck)
+	e.GET("/api/decks", env.getDecks)
 	// e.POST("/api/cards", env.Cards, cookiesToAuth, authorization, clerkAuth)
 	e.POST("/api/cards", env.Cards)
 	// e.GET("api/login", env.login)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
-func (env *Env) dashboard(c echo.Context) error {
-	component := views.Dashboard()
-	return html(c, http.StatusOK, component)
-}
+// func (env *Env) dashboard(c echo.Context) error {
+// 	component := views.Dashboard()
+// 	return html(c, http.StatusOK, component)
+// }
 
 type CardInput struct {
-	Question string `json:"question"`
-	Answer   string `json:"answer"`
+	question string `json:"question"`
+	answer   string `json:"answer"`
 }
 
 func (env *Env) Cards(c echo.Context) error {
@@ -98,8 +98,8 @@ func (env *Env) Cards(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	cardParams := queries.CreateCardParams{
-		Question: cardInput.Question,
-		Answer:   cardInput.Answer,
+		Question: cardInput.question,
+		Answer:   cardInput.answer,
 	}
 	card, err := env.decks.Queries.CreateCard(context.Background(), cardParams)
 	if err != nil {
@@ -179,8 +179,29 @@ func setAuthHeader(r *http.Request, value string) {
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", value))
 }
 
+type DeckInput struct {
+	Name string `json:"name"`
+}
+
 func (env *Env) createDeck(c echo.Context) error {
-	name := c.FormValue("name")
-	env.decks.CreateDeck(database.NewDeck{Name: name})
-	return c.NoContent(http.StatusOK)
+	name := DeckInput{}
+	err := c.Bind(&name)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	deck, err := env.decks.Queries.CreateDeck(c.Request().Context(), name.Name)
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	return c.JSON(http.StatusOK, deck)
+}
+
+func (env *Env) getDecks(c echo.Context) error {
+	fmt.Println("getting decks")
+	decks, err := env.decks.Queries.ListDecks(c.Request().Context())
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, decks)
 }

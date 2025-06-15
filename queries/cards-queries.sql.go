@@ -19,9 +19,9 @@ RETURNING id, question, answer, deck_id
 `
 
 type CreateCardParams struct {
-	DeckID   int32
-	Question string
-	Answer   string
+	DeckID   int32  `json:"deck_id"`
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
 }
 
 func (q *Queries) CreateCard(ctx context.Context, arg CreateCardParams) (Card, error) {

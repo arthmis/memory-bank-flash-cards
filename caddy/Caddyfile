@@ -1,0 +1,20 @@
+:3000 {
+	encode zstd gzip
+	handle /api/* {
+		reverse_proxy localhost:8000
+	}
+
+	handle {
+		reverse_proxy localhost:3000
+	}
+
+	#  use when serving the files directly for production
+	# handle {
+	# 	root * ../app/dist
+	# 	route {
+	# 		try_files {path} /index.html
+	# 		header /index.html Cache-Control "public, max-age=0, must-revalidate"
+	# 	}
+	# 	file_server
+	# }
+}

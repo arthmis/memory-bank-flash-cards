@@ -8,6 +8,7 @@ export default defineConfig({
       target: 'solid',
       autoCodeSplitting: true,
       verboseFileRoutes: false,
+      apiBase: "/dashboard/",
     }),
     solidPlugin(),
   ],
@@ -17,4 +18,5 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  // base: "/dashboard/"
 });

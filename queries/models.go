@@ -4,11 +4,14 @@
 
 package queries
 
-import (
-	"github.com/jackc/pgx/v5/pgtype"
-)
+type Card struct {
+	ID       int32  `json:"id"`
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+	DeckID   int32  `json:"deck_id"`
+}
 
 type Deck struct {
-	ID   pgtype.Int4
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
