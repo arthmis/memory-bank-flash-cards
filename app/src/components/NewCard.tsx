@@ -1,10 +1,16 @@
 import { createSignal } from "solid-js";
 import { useContext } from "solid-js"
 import { JSX } from "solid-js/jsx-runtime";
+import { Card, DeckContext, Route } from "../routes/deck/$deckId";
 
 export function NewCard() {
+    const { deckId } = Route.useParams()();
+    console.log("deck id", deckId);
+
     const [question, setQuestion] = createSignal("");
     const [answer, setAnswer] = createSignal("");
+    const {setState }  = useContext(DeckContext);
+
     const addCard: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (event) => {
         event.preventDefault();
 
@@ -13,7 +19,7 @@ export function NewCard() {
             answer: answer()
         }
 
-        fetch("/api/cards", {
+        fetch(`/api/decks/${deckId}/cards`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -22,6 +28,15 @@ export function NewCard() {
         }).then(res => res.json())
             .then(data => {
                 console.log(data);
+                setState("isAddingCard", false)
+                setState("cards", (currentCards: Card[]) => [
+                    ...currentCards,
+                    data
+                ])
+            })
+            .finally(() => {
+                setQuestion("");
+                setAnswer("");
             })
         console.log(event);
         // return the card and place into state

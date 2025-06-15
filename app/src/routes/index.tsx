@@ -34,7 +34,6 @@ function Index() {
     })
       .then((res) => res.json())
       .then((deck) => {
-        console.log(deck);
         setDecks([...decks(), deck]);
       });
 

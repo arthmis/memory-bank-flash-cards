@@ -9,6 +9,7 @@ import (
 	"memorybank/queries"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -77,6 +78,7 @@ func main() {
 	e.GET("/api/decks", env.getDecks)
 	// e.POST("/api/cards", env.Cards, cookiesToAuth, authorization, clerkAuth)
 	e.POST("/api/cards", env.Cards)
+	e.POST("/api/decks/:deck_id/cards", env.createCard)
 	// e.GET("api/login", env.login)
 	e.Logger.Fatal(e.Start(":8000"))
 }
@@ -204,4 +206,37 @@ func (env *Env) getDecks(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, decks)
+}
+
+type CreateCardInput struct {
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+}
+
+func (env *Env) createCard(c echo.Context) error {
+	input := CreateCardInput{}
+	err := c.Bind(&input)
+	if err != nil {
+		fmt.Printf("card %s\n", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	parsedDeckId, err := strconv.Atoi(c.Param("deck_id"))
+	if err != nil {
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	deckId := int32(parsedDeckId)
+
+	cardParams := queries.CreateCardParams{
+		DeckID:   deckId,
+		Question: input.Question,
+		Answer:   input.Answer,
+	}
+
+	card, err := env.decks.Queries.CreateCard(c.Request().Context(), cardParams)
+	if err != nil {
+		fmt.Printf("card %s\n", err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	return c.JSON(http.StatusOK, card)
 }
