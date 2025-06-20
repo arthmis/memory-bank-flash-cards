@@ -25,6 +25,18 @@ func (q *Queries) CreateDeck(ctx context.Context, name string) (Deck, error) {
 	return i, err
 }
 
+const getDeck = `-- name: GetDeck :one
+SELECT id, name FROM decks 
+WHERE name = $1
+`
+
+func (q *Queries) GetDeck(ctx context.Context, name string) (Deck, error) {
+	row := q.db.QueryRow(ctx, getDeck, name)
+	var i Deck
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
 const listDecks = `-- name: ListDecks :many
 SELECT id, name FROM decks 
 ORDER BY name
