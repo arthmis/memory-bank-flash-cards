@@ -14,6 +14,25 @@ import (
 	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 )
 
+// Card defines model for Card.
+type Card struct {
+	Answer string `json:"answer"`
+
+	// DeckId The id of the deck the card belongs to
+	DeckId int32 `json:"deckId"`
+
+	// Id card id
+	Id int32 `json:"id"`
+
+	// Question The question for the card
+	Question string `json:"question"`
+}
+
+// Cards defines model for Cards.
+type Cards struct {
+	Cards []Card `json:"cards"`
+}
+
 // CreateDeckJSONBody defines parameters for CreateDeck.
 type CreateDeckJSONBody struct {
 	// Name The name of the deck
@@ -47,8 +66,8 @@ type ServerInterface interface {
 	// (GET /api/decks/{deckId}/cards)
 	GetCardsByDeckId(ctx echo.Context, deckId int) error
 	// Create a new card in a deck
-	// (POST /api/{deckId}/cards)
-	CreateCard(ctx echo.Context, deckId int) error
+	// (POST /api/decks/{deckId}/cards)
+	CreateCard(ctx echo.Context, deckId int32) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -101,7 +120,7 @@ func (w *ServerInterfaceWrapper) GetCardsByDeckId(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) CreateCard(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "deckId" -------------
-	var deckId int
+	var deckId int32
 
 	err = runtime.BindStyledParameterWithOptions("simple", "deckId", ctx.Param("deckId"), &deckId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -144,7 +163,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/api/decks", wrapper.CreateDeck)
 	router.GET(baseURL+"/api/decks/:deckId", wrapper.GetDeckById)
 	router.GET(baseURL+"/api/decks/:deckId/cards", wrapper.GetCardsByDeckId)
-	router.POST(baseURL+"/api/:deckId/cards", wrapper.CreateCard)
+	router.POST(baseURL+"/api/decks/:deckId/cards", wrapper.CreateCard)
 
 }
 
@@ -202,14 +221,7 @@ type GetCardsByDeckIdResponseObject interface {
 	VisitGetCardsByDeckIdResponse(w http.ResponseWriter) error
 }
 
-type GetCardsByDeckId200JSONResponse struct {
-	Cards []struct {
-		Answer string `json:"answer"`
-
-		// Question The question for the card
-		Question string `json:"question"`
-	} `json:"cards"`
-}
+type GetCardsByDeckId200JSONResponse Cards
 
 func (response GetCardsByDeckId200JSONResponse) VisitGetCardsByDeckIdResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -219,7 +231,7 @@ func (response GetCardsByDeckId200JSONResponse) VisitGetCardsByDeckIdResponse(w 
 }
 
 type CreateCardRequestObject struct {
-	DeckId int `json:"deckId"`
+	DeckId int32 `json:"deckId"`
 	Body   *CreateCardJSONRequestBody
 }
 
@@ -227,12 +239,7 @@ type CreateCardResponseObject interface {
 	VisitCreateCardResponse(w http.ResponseWriter) error
 }
 
-type CreateCard200JSONResponse struct {
-	Answer string `json:"answer"`
-
-	// Question The question for the card
-	Question string `json:"question"`
-}
+type CreateCard200JSONResponse Card
 
 func (response CreateCard200JSONResponse) VisitCreateCardResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -253,7 +260,7 @@ type StrictServerInterface interface {
 	// (GET /api/decks/{deckId}/cards)
 	GetCardsByDeckId(ctx context.Context, request GetCardsByDeckIdRequestObject) (GetCardsByDeckIdResponseObject, error)
 	// Create a new card in a deck
-	// (POST /api/{deckId}/cards)
+	// (POST /api/decks/{deckId}/cards)
 	CreateCard(ctx context.Context, request CreateCardRequestObject) (CreateCardResponseObject, error)
 }
 
@@ -349,7 +356,7 @@ func (sh *strictHandler) GetCardsByDeckId(ctx echo.Context, deckId int) error {
 }
 
 // CreateCard operation middleware
-func (sh *strictHandler) CreateCard(ctx echo.Context, deckId int) error {
+func (sh *strictHandler) CreateCard(ctx echo.Context, deckId int32) error {
 	var request CreateCardRequestObject
 
 	request.DeckId = deckId

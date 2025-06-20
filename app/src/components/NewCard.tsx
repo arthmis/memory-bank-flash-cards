@@ -1,7 +1,8 @@
 import { createSignal } from "solid-js";
 import { useContext } from "solid-js"
 import { JSX } from "solid-js/jsx-runtime";
-import { Card, DeckContext, Route } from "../routes/decks/$deckId";
+import { DeckContext, Route } from "../routes/decks/$deckId";
+import { Card, createCard } from "../orval-client";
 
 export function NewCard() {
     const { deckId } = Route.useParams()();
@@ -9,7 +10,7 @@ export function NewCard() {
 
     const [question, setQuestion] = createSignal("");
     const [answer, setAnswer] = createSignal("");
-    const {setState }  = useContext(DeckContext);
+    const { setState, } = useContext(DeckContext);
 
     const addCard: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (event) => {
         event.preventDefault();
@@ -19,27 +20,19 @@ export function NewCard() {
             answer: answer()
         }
 
-        fetch(`/api/decks/${deckId}/cards`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(form)
-        }).then(res => res.json())
-            .then(data => {
-                console.log(data);
+        createCard(Number.parseInt(deckId), form
+        )
+            .then((res) => {
                 setState("isAddingCard", false)
                 setState("cards", (currentCards: Card[]) => [
                     ...currentCards,
-                    data
+                    res.data
                 ])
             })
             .finally(() => {
                 setQuestion("");
                 setAnswer("");
             })
-        console.log(event);
-        // return the card and place into state
     }
     return (
         <>

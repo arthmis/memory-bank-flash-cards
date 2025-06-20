@@ -80,25 +80,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  cards:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        question:
-                          type: string
-                          description: The question for the card
-                        answer:
-                          type: string
-                          answer: The answer for the card
-                      required:
-                        - question
-                        - answer
-                required:
-                  - cards
-  /api/{deckId}/cards:
+                $ref: '#/components/schemas/Cards'
     post:
       summary: Create a new card in a deck
       operationId: createCard
@@ -107,6 +89,7 @@ paths:
           name: deckId
           schema:
             type: integer
+            format: int32
           required: true
       requestBody:
         required: true
@@ -131,14 +114,38 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  question:
-                    type: string
-                    description: The question for the card
-                  answer:
-                    type: string
-                    answer: The answer for the card
-                required:
-                  - question
-                  - answer
+                $ref: '#/components/schemas/Card'
+
+components:
+  schemas:
+    Cards:
+      type: object
+      properties:
+        cards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Card'
+      required:
+        - cards
+    Card:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: card id
+        question:
+          type: string
+          description: The question for the card
+        answer:
+          type: string
+          answer: The answer for the card
+        deckId:
+          type: integer
+          format: int32
+          description: The id of the deck the card belongs to
+      required:
+        - question
+        - answer
+        - deckId
+        - id

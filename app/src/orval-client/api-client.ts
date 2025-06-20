@@ -4,6 +4,20 @@
  * Memory Bank API
  * OpenAPI spec version: 1.0.0
  */
+export interface Cards {
+  cards: Card[];
+}
+
+export interface Card {
+  /** card id */
+  id: number;
+  /** The question for the card */
+  question: string;
+  answer: string;
+  /** The id of the deck the card belongs to */
+  deckId: number;
+}
+
 export type CreateDeckBody = {
   /** The name of the deck */
   name: string;
@@ -23,26 +37,10 @@ export type GetDeckById200 = {
   name: string;
 };
 
-export type GetCardsByDeckId200CardsItem = {
-  /** The question for the card */
-  question: string;
-  answer: string;
-};
-
-export type GetCardsByDeckId200 = {
-  cards: GetCardsByDeckId200CardsItem[];
-};
-
 export type CreateCardBody = {
   /** The question for a card */
   question: string;
   /** The answer for a card */
-  answer: string;
-};
-
-export type CreateCard200 = {
-  /** The question for the card */
-  question: string;
   answer: string;
 };
 
@@ -133,7 +131,7 @@ export const getDeckById = async (deckId: number, options?: RequestInit): Promis
  * @summary Get all cards in a deck
  */
 export type getCardsByDeckIdResponse200 = {
-  data: GetCardsByDeckId200
+  data: Cards
   status: 200
 }
     
@@ -174,7 +172,7 @@ export const getCardsByDeckId = async (deckId: number, options?: RequestInit): P
  * @summary Create a new card in a deck
  */
 export type createCardResponse200 = {
-  data: CreateCard200
+  data: Card
   status: 200
 }
     
@@ -189,7 +187,7 @@ export const getCreateCardUrl = (deckId: number,) => {
 
   
 
-  return `/api/${deckId}/cards`
+  return `/api/decks/${deckId}/cards`
 }
 
 export const createCard = async (deckId: number,

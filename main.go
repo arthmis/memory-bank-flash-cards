@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 	"log"
+	"memorybank/api"
 	"memorybank/database"
 	"memorybank/queries"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -65,22 +66,16 @@ func main() {
 		decks: database.DeckModel{DB: dbpool, Queries: *deckQueries},
 	}
 
+	handlers := api.NewStrictHandler(env, nil)
 	e := echo.New()
-	e.Static("/dashboard", "app/dist")
-	// e.GET("/dashboard", env.dashboard, cookiesToAuth, handleAuth)
-	// protectedHandler := http.HandlerFunc(clerkAuth)
-	// headerAuthorization := clerkhttp.WithHeaderAuthorization()(protectedHandler)
-	// headerAuthorization := clerkhttp.WithHeaderAuthorization()
-	// authorization := echo.WrapMiddleware(headerAuthorization)
-	// e.GET("/dashboard", env.dashboard, cookiesToAuth, authorization, clerkAuth)
-	// e.GET("/login", env.Login)
-	e.POST("/api/decks", env.createDeck)
-	e.GET("/api/decks", env.getDecks)
-	// e.POST("/api/cards", env.Cards, cookiesToAuth, authorization, clerkAuth)
-	e.POST("/api/cards", env.Cards)
-	e.POST("/api/decks/:deck_id/cards", env.createCard)
-	e.GET("/api/decks/:deck_id/cards", env.getCards)
-	// e.GET("api/login", env.login)
+	api.RegisterHandlers(e, handlers)
+	// e.Static("/dashboard", "app/dist")
+	// // e.GET("/dashboard", env.dashboard, cookiesToAuth, handleAuth)
+	// // protectedHandler := http.HandlerFunc(clerkAuth)
+	// // headerAuthorization := clerkhttp.WithHeaderAuthorization()(protectedHandler)
+	// // headerAuthorization := clerkhttp.WithHeaderAuthorization()
+	// // authorization := echo.WrapMiddleware(headerAuthorization)
+	// // e.GET("/dashboard", env.dashboard, cookiesToAuth, authorization, clerkAuth)
 	e.Logger.Fatal(e.Start(":8000"))
 }
 
@@ -182,81 +177,78 @@ func setAuthHeader(r *http.Request, value string) {
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", value))
 }
 
-type DeckInput struct {
-	Name string `json:"name"`
+func (env *Env) CreateDeck(ctx context.Context, request api.CreateDeckRequestObject) (api.CreateDeckResponseObject, error) {
+	input := request.Body
+	deck, err := env.decks.Queries.CreateDeck(ctx, input.Name)
+	if err != nil {
+		return api.CreateDeck201JSONResponse{}, err
+	}
+	return api.CreateDeck201JSONResponse{
+		Id:   int(deck.ID),
+		Name: deck.Name,
+	}, nil
 }
 
-func (env *Env) createDeck(c echo.Context) error {
-	name := DeckInput{}
-	err := c.Bind(&name)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	deck, err := env.decks.Queries.CreateDeck(c.Request().Context(), name.Name)
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	return c.JSON(http.StatusOK, deck)
+func (env *Env) GetDeckById(ctx context.Context, request api.GetDeckByIdRequestObject) (api.GetDeckByIdResponseObject, error) {
+	return api.GetDeckById200JSONResponse{}, nil
 }
 
-func (env *Env) getDecks(c echo.Context) error {
-	fmt.Println("getting decks")
-	decks, err := env.decks.Queries.ListDecks(c.Request().Context())
-	if err != nil {
-		fmt.Println("couldn't get decks")
-		return c.NoContent(http.StatusInternalServerError)
+func Map[T, U any](seq iter.Seq[T], f func(T) U) iter.Seq[U] {
+	return func(yield func(U) bool) {
+		for a := range seq {
+			if !yield(f(a)) {
+				return
+			}
+		}
 	}
-
-	return c.JSON(http.StatusOK, decks)
 }
 
-type CreateCardInput struct {
-	Question string `json:"question"`
-	Answer   string `json:"answer"`
-}
-
-func (env *Env) createCard(c echo.Context) error {
-	input := CreateCardInput{}
-	err := c.Bind(&input)
-	if err != nil {
-		fmt.Printf("card %s\n", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
-	parsedDeckId, err := strconv.Atoi(c.Param("deck_id"))
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	deckId := int32(parsedDeckId)
-
-	cardParams := queries.CreateCardParams{
-		DeckID:   deckId,
-		Question: input.Question,
-		Answer:   input.Answer,
-	}
-
-	card, err := env.decks.Queries.CreateCard(c.Request().Context(), cardParams)
-	if err != nil {
-		fmt.Printf("card %s\n", err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	return c.JSON(http.StatusOK, card)
-}
-
-func (env *Env) getCards(c echo.Context) error {
+func (env *Env) GetCardsByDeckId(ctx context.Context, request api.GetCardsByDeckIdRequestObject) (api.GetCardsByDeckIdResponseObject, error) {
 	fmt.Println("getting cards")
-
-	parsedDeckId, err := strconv.Atoi(c.Param("deck_id"))
-	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
-	}
+	parsedDeckId := request.DeckId
 	deckId := int32(parsedDeckId)
 	fmt.Println(deckId)
 
-	cards, err := env.decks.Queries.ListCards(c.Request().Context(), deckId)
+	cards, err := env.decks.Queries.ListCards(ctx, deckId)
 	if err != nil {
-		return c.NoContent(http.StatusInternalServerError)
+		return api.GetCardsByDeckId200JSONResponse{}, nil
 	}
 
-	return c.JSON(http.StatusOK, cards)
+	cardsResponse := []api.Card{}
+	for _, c := range cards {
+		card := api.Card{
+			Id:       c.ID,
+			Question: c.Question,
+			Answer:   c.Answer,
+			DeckId:   c.DeckID,
+		}
+		cardsResponse = append(cardsResponse, card)
+	}
+
+	return api.GetCardsByDeckId200JSONResponse{Cards: cardsResponse}, nil
+}
+
+func (env *Env) CreateCard(ctx context.Context, request api.CreateCardRequestObject) (api.CreateCardResponseObject, error) {
+	deckId := request.DeckId
+	cardInput := request.Body
+
+	cardParams := queries.CreateCardParams{
+		DeckID:   deckId,
+		Question: cardInput.Question,
+		Answer:   cardInput.Answer,
+	}
+
+	card, err := env.decks.Queries.CreateCard(ctx, cardParams)
+	if err != nil {
+		fmt.Printf("card %s\n", err)
+		return api.CreateCard200JSONResponse{}, nil
+	}
+
+	output := api.Card{
+		Id:       card.ID,
+		Question: card.Question,
+		Answer:   card.Answer,
+		DeckId:   card.DeckID,
+	}
+	return api.CreateCard200JSONResponse(output), nil
 }

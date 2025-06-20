@@ -3,15 +3,16 @@ import { createStore, Store } from "solid-js/store"
 import { NewCard } from "../../components/NewCard";
 import type { StoreNode, Store as StoreType, SetStoreFunction } from "solid-js/store"
 import { getRouteApi } from "@tanstack/solid-router";
+import { Card, getCardsByDeckId, getCardsByDeckIdResponse } from "../../orval-client";
 
-const fetchCards = async ( params ): Promise<Array<Card>> => {
-  const { deckId } = params;
-  const json = (await fetch(`/api/decks/${deckId}/cards`)).json()
-  return json
+const fetchCards = async (params): Promise<getCardsByDeckIdResponse> => {
+    const { deckId } = params;
+    const data = getCardsByDeckId(deckId)
+    return data
 }
 
 export const Route = createFileRoute({
-    loader: async ({ params}) => fetchCards(  params  ),
+    loader: async ({ params }) => fetchCards(params),
     component: DeckComponent,
 })
 
@@ -21,21 +22,16 @@ interface DeckState {
     cards: Card[];
 }
 
-export interface Card {
-    question: string;
-    answer: string;
-}
-
 export const DeckContext = createContext<{ state: Store<DeckState>, setState: SetStoreFunction<DeckState> }>();
 
 
 function DeckComponent() {
     const { deckId } = Route.useParams()();
-    const cards = Route.useLoaderData()
+    const { data } = Route.useLoaderData()()
     const [state, setState] = createStore({
         deckId,
         isAddingCard: false,
-        cards: cards(),
+        cards: data.cards ?? [],
     })
 
     return <>
