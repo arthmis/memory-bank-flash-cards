@@ -1,0 +1,144 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Memory Bank API
+paths:
+  /api/decks:
+    post:
+      summary: Create a new deck
+      operationId: createDeck
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the deck
+              required:
+                - name
+      responses:
+        '201':
+          description: successfully created deck
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer 
+                    description: The id of the deck
+                  name:
+                    type: string
+                    description: The name of the deck
+                required:
+                  - id
+                  - name
+  /api/decks/{deckId}:
+    get:
+      summary: Get a deck by ID
+      operationId: getDeckById
+      parameters:
+        - in: path
+          name: deckId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successfully retrieve deck with id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer 
+                    description: The id of the deck
+                  name:
+                    type: string
+                    description: The name of the deck
+                required:
+                  - id
+                  - name
+  /api/decks/{deckId}/cards:
+    get:
+      summary: Get all cards in a deck
+      operationId: getCardsByDeckId
+      parameters:
+        - in: path
+          name: deckId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: successfully retrieve cards for deck with id
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        question:
+                          type: string
+                          description: The question for the card
+                        answer:
+                          type: string
+                          answer: The answer for the card
+                      required:
+                        - question
+                        - answer
+                required:
+                  - cards
+  /api/{deckId}/cards:
+    post:
+      summary: Create a new card in a deck
+      operationId: createCard
+      parameters:
+        - in: path
+          name: deckId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  description: The question for a card
+                answer:
+                  type: string
+                  description: The answer for a card
+              required:
+                - question
+                - answer
+      responses:
+        '200':
+          description: successfully create card for deck and return it
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  question:
+                    type: string
+                    description: The question for the card
+                  answer:
+                    type: string
+                    answer: The answer for the card
+                required:
+                  - question
+                  - answer

@@ -4,6 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
+    "openapi": "npx @openapitools/openapi-generator-cli generate -i ../api-schema/api.yaml -g typescript-fetch -o ./src/client",
     "start": "vite",
     "dev": "vite",
     "build": "vite build --watch",
@@ -11,7 +12,9 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.20.2",
     "@tanstack/router-plugin": "^1.121.9",
+    "orval": "^7.10.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.0",
     "vite-plugin-solid": "^2.11.6"
