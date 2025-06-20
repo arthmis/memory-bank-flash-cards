@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"iter"
 	"log"
 	"memorybank/api"
 	"memorybank/database"
@@ -181,7 +180,7 @@ func (env *Env) CreateDeck(ctx context.Context, request api.CreateDeckRequestObj
 	input := request.Body
 	deck, err := env.decks.Queries.CreateDeck(ctx, input.Name)
 	if err != nil {
-		return api.CreateDeck201JSONResponse{}, err
+		return api.CreateDeck500Response{}, err
 	}
 	return api.CreateDeck201JSONResponse{
 		Id:   int(deck.ID),
@@ -193,16 +192,6 @@ func (env *Env) GetDeckById(ctx context.Context, request api.GetDeckByIdRequestO
 	return api.GetDeckById200JSONResponse{}, nil
 }
 
-func Map[T, U any](seq iter.Seq[T], f func(T) U) iter.Seq[U] {
-	return func(yield func(U) bool) {
-		for a := range seq {
-			if !yield(f(a)) {
-				return
-			}
-		}
-	}
-}
-
 func (env *Env) GetCardsByDeckId(ctx context.Context, request api.GetCardsByDeckIdRequestObject) (api.GetCardsByDeckIdResponseObject, error) {
 	fmt.Println("getting cards")
 	parsedDeckId := request.DeckId
@@ -211,7 +200,7 @@ func (env *Env) GetCardsByDeckId(ctx context.Context, request api.GetCardsByDeck
 
 	cards, err := env.decks.Queries.ListCards(ctx, deckId)
 	if err != nil {
-		return api.GetCardsByDeckId200JSONResponse{}, nil
+		return api.GetCardsByDeckId500Response{}, nil
 	}
 
 	cardsResponse := []api.Card{}
@@ -241,7 +230,7 @@ func (env *Env) CreateCard(ctx context.Context, request api.CreateCardRequestObj
 	card, err := env.decks.Queries.CreateCard(ctx, cardParams)
 	if err != nil {
 		fmt.Printf("card %s\n", err)
-		return api.CreateCard200JSONResponse{}, nil
+		return api.CreateCard500Response{}, nil
 	}
 
 	output := api.Card{
@@ -250,5 +239,5 @@ func (env *Env) CreateCard(ctx context.Context, request api.CreateCardRequestObj
 		Answer:   card.Answer,
 		DeckId:   card.DeckID,
 	}
-	return api.CreateCard200JSONResponse(output), nil
+	return api.CreateCard201JSONResponse(output), nil
 }

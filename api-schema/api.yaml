@@ -36,6 +36,10 @@ paths:
                 required:
                   - id
                   - name
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Server error. Something unexpected happened.
   /api/decks/{deckId}:
     get:
       summary: Get a deck by ID
@@ -46,6 +50,7 @@ paths:
           schema:
             type: integer
           required: true
+      # TODO: Add error responses to endpoints
       responses:
         '200':
           description: successfully retrieve deck with id
@@ -63,6 +68,10 @@ paths:
                 required:
                   - id
                   - name
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Server error. Something unexpected happened.
   /api/decks/{deckId}/cards:
     get:
       summary: Get all cards in a deck
@@ -81,6 +90,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cards'
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Server error. Something unexpected happened.
     post:
       summary: Create a new card in a deck
       operationId: createCard
@@ -108,13 +121,17 @@ paths:
                 - question
                 - answer
       responses:
-        '200':
+        '201':
           description: successfully create card for deck and return it
           required: true
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Card'
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Server error. Something unexpected happened.
 
 components:
   schemas:

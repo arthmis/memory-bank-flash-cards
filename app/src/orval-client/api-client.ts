@@ -51,8 +51,13 @@ export type createDeckResponse201 = {
   data: CreateDeck201
   status: 201
 }
+
+export type createDeckResponse401 = {
+  data: void
+  status: 401
+}
     
-export type createDeckResponseComposite = createDeckResponse201;
+export type createDeckResponseComposite = createDeckResponse201 | createDeckResponse401;
     
 export type createDeckResponse = createDeckResponseComposite & {
   headers: Headers;
@@ -93,8 +98,13 @@ export type getDeckByIdResponse200 = {
   data: GetDeckById200
   status: 200
 }
+
+export type getDeckByIdResponse401 = {
+  data: void
+  status: 401
+}
     
-export type getDeckByIdResponseComposite = getDeckByIdResponse200;
+export type getDeckByIdResponseComposite = getDeckByIdResponse200 | getDeckByIdResponse401;
     
 export type getDeckByIdResponse = getDeckByIdResponseComposite & {
   headers: Headers;
@@ -134,8 +144,13 @@ export type getCardsByDeckIdResponse200 = {
   data: Cards
   status: 200
 }
+
+export type getCardsByDeckIdResponse401 = {
+  data: void
+  status: 401
+}
     
-export type getCardsByDeckIdResponseComposite = getCardsByDeckIdResponse200;
+export type getCardsByDeckIdResponseComposite = getCardsByDeckIdResponse200 | getCardsByDeckIdResponse401;
     
 export type getCardsByDeckIdResponse = getCardsByDeckIdResponseComposite & {
   headers: Headers;
@@ -171,12 +186,17 @@ export const getCardsByDeckId = async (deckId: number, options?: RequestInit): P
 /**
  * @summary Create a new card in a deck
  */
-export type createCardResponse200 = {
+export type createCardResponse201 = {
   data: Card
-  status: 200
+  status: 201
+}
+
+export type createCardResponse401 = {
+  data: void
+  status: 401
 }
     
-export type createCardResponseComposite = createCardResponse200;
+export type createCardResponseComposite = createCardResponse201 | createCardResponse401;
     
 export type createCardResponse = createCardResponseComposite & {
   headers: Headers;

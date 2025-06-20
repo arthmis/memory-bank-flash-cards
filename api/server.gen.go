@@ -190,6 +190,22 @@ func (response CreateDeck201JSONResponse) VisitCreateDeckResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
+type CreateDeck401Response struct {
+}
+
+func (response CreateDeck401Response) VisitCreateDeckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type CreateDeck500Response struct {
+}
+
+func (response CreateDeck500Response) VisitCreateDeckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type GetDeckByIdRequestObject struct {
 	DeckId int `json:"deckId"`
 }
@@ -213,6 +229,22 @@ func (response GetDeckById200JSONResponse) VisitGetDeckByIdResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetDeckById401Response struct {
+}
+
+func (response GetDeckById401Response) VisitGetDeckByIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type GetDeckById500Response struct {
+}
+
+func (response GetDeckById500Response) VisitGetDeckByIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type GetCardsByDeckIdRequestObject struct {
 	DeckId int `json:"deckId"`
 }
@@ -230,6 +262,22 @@ func (response GetCardsByDeckId200JSONResponse) VisitGetCardsByDeckIdResponse(w 
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetCardsByDeckId401Response struct {
+}
+
+func (response GetCardsByDeckId401Response) VisitGetCardsByDeckIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type GetCardsByDeckId500Response struct {
+}
+
+func (response GetCardsByDeckId500Response) VisitGetCardsByDeckIdResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type CreateCardRequestObject struct {
 	DeckId int32 `json:"deckId"`
 	Body   *CreateCardJSONRequestBody
@@ -239,13 +287,29 @@ type CreateCardResponseObject interface {
 	VisitCreateCardResponse(w http.ResponseWriter) error
 }
 
-type CreateCard200JSONResponse Card
+type CreateCard201JSONResponse Card
 
-func (response CreateCard200JSONResponse) VisitCreateCardResponse(w http.ResponseWriter) error {
+func (response CreateCard201JSONResponse) VisitCreateCardResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+type CreateCard401Response struct {
+}
+
+func (response CreateCard401Response) VisitCreateCardResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type CreateCard500Response struct {
+}
+
+func (response CreateCard500Response) VisitCreateCardResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
 }
 
 // StrictServerInterface represents all server handlers.
