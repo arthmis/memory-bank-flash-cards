@@ -34,8 +34,22 @@ type SessionTokenLifetimeOverride struct {
 }
 
 func TestCreateDeck(t *testing.T) {
-	godotenv.Load("../.env")
+	ctx := context.Background()
+	dbpool, err := pgxpool.New(ctx, "user=postgres dbname=postgres password=postgres port=7777")
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
 
+	defer dbpool.Close()
+
+	deckQueries := queries.New(dbpool)
+
+	env := &Env{
+		Decks: database.DeckModel{DB: dbpool, Queries: *deckQueries},
+	}
+
+	godotenv.Load("../.env")
 	clerkKey := os.Getenv("clerk_secret_key")
 
 	client := resty.New()
@@ -56,20 +70,6 @@ func TestCreateDeck(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.True(t, res.StatusCode() == 200, "True is true")
-
-	ctx := context.Background()
-	dbpool, err := pgxpool.New(ctx, "user=postgres dbname=postgres password=postgres port=7777")
-	if err != nil {
-		log.Fatalln(err)
-		return
-	}
-	defer dbpool.Close()
-
-	deckQueries := queries.New(dbpool)
-
-	env := &Env{
-		Decks: database.DeckModel{DB: dbpool, Queries: *deckQueries},
-	}
 
 	handlers := NewStrictHandler(env, nil)
 	e := echo.New()

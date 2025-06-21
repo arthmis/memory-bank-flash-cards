@@ -21,9 +21,14 @@ jobs:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - uses: actions/checkout@v4
-
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -32,6 +37,11 @@ jobs:
         clerk_secret_key: ${{ secrets.clerk_secret_key_default }}
     - name: Install dependencies
       run: go get . 
+    - name: Install db migration tool
+      run: go install github.com/jackc/tern/v2@latest
+    - name: Run migrations for testing
+      working-directory: ./sqlc-queries/db
+      run: tern migrate
     - name: Test
       run: go test -v ./...
 
