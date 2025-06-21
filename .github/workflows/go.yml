@@ -20,9 +20,12 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.24'
+      env:
+        clerk_secret_key: ${{ secrets.clerk_secret_key_default }}
+    - name: Install dependencies
+      run: go get . 
+    - name: Test
+      run: go test -v ./...
 
     # - name: Build
     #   run: go build -v ./...
-
-    - name: Test
-      run: go test -v ./...
