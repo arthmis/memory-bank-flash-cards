@@ -40,7 +40,7 @@ jobs:
     - name: Install db migration tool
       run: go install github.com/jackc/tern/v2@latest
     - name: Run migrations for testing
-      working-directory: ./sqlc-queries/db
+      working-directory: ./sqlc-queries/db/migrations
       run: tern migrate
     - name: Test
       run: go test -v ./...
