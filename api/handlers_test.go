@@ -35,7 +35,7 @@ type SessionTokenLifetimeOverride struct {
 
 func TestCreateDeck(t *testing.T) {
 	ctx := context.Background()
-	dbpool, err := pgxpool.New(ctx, "user=postgres dbname=postgres password=postgres port=7777")
+	dbpool, err := pgxpool.New(ctx, "host=127.0.0.1 database=postgres user=postgres dbname=postgres password=postgres port=7777")
 	if err != nil {
 		log.Fatalln(err)
 		return
