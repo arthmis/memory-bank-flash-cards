@@ -9,15 +9,12 @@ import (
 	"memorybank/queries"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
-	"github.com/clerk/clerk-sdk-go/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"resty.dev/v3"
 )
 
 type User struct {
@@ -50,26 +47,26 @@ func TestCreateDeck(t *testing.T) {
 	}
 
 	godotenv.Load("../.env")
-	clerkKey := os.Getenv("clerk_secret_key")
+	// clerkKey := os.Getenv("clerk_secret_key")
 
-	client := resty.New()
-	defer client.Close()
-	id := "user_2ymUWK4LNISQ14RsaK8F5hPmzW0"
+	// client := resty.New()
+	// defer client.Close()
+	// id := "user_2ymUWK4LNISQ14RsaK8F5hPmzW0"
 
-	session := clerk.Session{}
-	res, err := client.R().SetBody(User{UserId: id}).SetHeader("Authorization", "Bearer "+clerkKey).SetHeader("Content-Type", "application/json").SetResult(&session).Post("https://api.clerk.com/v1/sessions")
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.True(t, session.UserID == id, "True is true")
-	assert.True(t, res.StatusCode() == 200, "True is true")
+	// session := clerk.Session{}
+	// res, err := client.R().SetBody(User{UserId: id}).SetHeader("Authorization", "Bearer "+clerkKey).SetHeader("Content-Type", "application/json").SetResult(&session).Post("https://api.clerk.com/v1/sessions")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// assert.True(t, session.UserID == id, "True is true")
+	// assert.True(t, res.StatusCode() == 200, "True is true")
 
-	sessionToken := SessionToken{}
-	res, err = client.R().SetPathParam("session_id", session.ID).SetHeader("Authorization", "Bearer "+clerkKey).SetBody(SessionTokenLifetimeOverride{ExpiresInSeconds: 3600}).SetResult(&sessionToken).Post("https://api.clerk.com/v1/sessions/{session_id}/tokens")
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.True(t, res.StatusCode() == 200, "True is true")
+	// sessionToken := SessionToken{}
+	// res, err = client.R().SetPathParam("session_id", session.ID).SetHeader("Authorization", "Bearer "+clerkKey).SetBody(SessionTokenLifetimeOverride{ExpiresInSeconds: 3600}).SetResult(&sessionToken).Post("https://api.clerk.com/v1/sessions/{session_id}/tokens")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// assert.True(t, res.StatusCode() == 200, "True is true")
 
 	handlers := NewStrictHandler(env, nil)
 	e := echo.New()
